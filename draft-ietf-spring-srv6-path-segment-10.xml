@@ -1,0 +1,715 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<!DOCTYPE rfc SYSTEM "rfc2629.dtd">
+<?rfc toc="yes"?>
+<?rfc tocompact="yes"?>
+<?rfc tocdepth="3"?>
+<?rfc tocindent="yes"?>
+<?rfc symrefs="yes"?>
+<?rfc sortrefs="yes"?>
+<?rfc comments="yes"?>
+<?rfc inline="yes"?>
+<?rfc compact="yes"?>
+<?rfc subcompact="no"?>
+<rfc category="std" docName="draft-ietf-spring-srv6-path-segment-10"
+     ipr="trust200902">
+  <front>
+    <title abbrev="SRv6 Path Segment">Path Segment for SRv6 (Segment Routing
+    in IPv6)</title>
+
+    <author fullname="Cheng Li" initials="C." surname="Li">
+      <organization>Huawei Technologies</organization>
+
+      <address>
+        <postal>
+          <street/>
+
+          <city/>
+
+          <region/>
+
+          <code/>
+
+          <country/>
+        </postal>
+
+        <phone/>
+
+        <facsimile/>
+
+        <email>c.l@huawei.com</email>
+
+        <uri/>
+      </address>
+    </author>
+
+    <author fullname="Weiqiang Cheng" initials="W." surname="Cheng">
+      <organization>China Mobile</organization>
+
+      <address>
+        <postal>
+          <street/>
+
+          <city/>
+
+          <region/>
+
+          <code/>
+
+          <country/>
+        </postal>
+
+        <phone/>
+
+        <facsimile/>
+
+        <email>chengweiqiang@chinamobile.com</email>
+
+        <uri/>
+      </address>
+    </author>
+
+    <author fullname="Mach(Guoyi) Chen" initials="M." surname="Chen">
+      <organization>Huawei Technologies</organization>
+
+      <address>
+        <postal>
+          <street/>
+
+          <city/>
+
+          <region/>
+
+          <code/>
+
+          <country/>
+        </postal>
+
+        <phone/>
+
+        <facsimile/>
+
+        <email>mach.chen@huawei.com</email>
+
+        <uri/>
+      </address>
+    </author>
+
+    <author fullname="Dhruv Dhody" initials="D." surname="Dhody">
+      <organization>Huawei Technologies</organization>
+
+      <address>
+        <postal>
+          <street>Divyashree Techno Park, Whitefield</street>
+
+          <city>Bangalore</city>
+
+          <region>Karnataka</region>
+
+          <code>560066</code>
+
+          <country>India</country>
+        </postal>
+
+        <phone/>
+
+        <facsimile/>
+
+        <email>dhruv.ietf@gmail.com</email>
+
+        <uri/>
+      </address>
+    </author>
+
+    <author fullname="Yongqing Zhu" initials="Y." surname="Zhu">
+      <organization>China Telecom</organization>
+
+      <address>
+        <postal>
+          <street/>
+
+          <city>Guangzhou</city>
+
+          <region/>
+
+          <code/>
+
+          <country/>
+        </postal>
+
+        <phone/>
+
+        <facsimile/>
+
+        <email>zhuyq8@chinatelecom.cn</email>
+
+        <uri/>
+      </address>
+    </author>
+
+    <date day="6" month="September" year="2024"/>
+
+    <workgroup>SPRING Working Group</workgroup>
+
+    <abstract>
+      <t>Segment Routing (SR) allows for a flexible definition of end-to-end
+      paths by encoding an ordered list of instructions, called "segments".
+      The SR architecture can be implemented over an MPLS data plane as well
+      as an IPv6 data plane.</t>
+
+      <t>Currently, Path Segment has been defined to identify an SR path in
+      SR-MPLS networks, and is used for various use-cases such as end-to-end
+      SR Path Protection and Performance Measurement (PM) of an SR path. This
+      document defines the Path Segment to identify an SRv6 path in an IPv6
+      network.</t>
+
+      <t/>
+    </abstract>
+  </front>
+
+  <middle>
+    <section title="Introduction">
+      <t>Segment routing (SR) <xref target="RFC8402"/> is a source routing
+      paradigm that explicitly indicates the forwarding path for packets at
+      the ingress node by inserting an ordered list of instructions, called
+      segments.</t>
+
+      <t>When segment routing is deployed on an MPLS data plane, called
+      SR-MPLS <xref target="RFC8660"/>, a segment identifier (SID) is present
+      as an MPLS label. When segment routing is deployed on an IPv6 data
+      plane, a SID is presented as a 128-bit value, and it can be an IPv6
+      address of a local interface but it does not have to be. To support SR
+      in an IPv6 network, a Segment Routing Header (SRH) <xref
+      target="RFC8754"/> is used.</t>
+
+      <t>In SR, a path needs to be identified for several use cases such as
+      binding bidirectional paths <xref target="I-D.ietf-pce-sr-bidir-path"/>
+      and end-to-end performance measurement <xref
+      target="I-D.ietf-spring-stamp-srpm"/>.</t>
+
+      <t>Additionally, in an SR-MPLS network, when a packet is transmitted
+      along an SR path, the labels in the MPLS label stack will be swapped or
+      popped, so no label or only the last label may be left in the MPLS label
+      stack when the packet reaches the egress node. Thus, the egress node can
+      not determine from which ingress node or SR path the packet came. To
+      identify an SR-MPLS path, a Path Segment is defined in <xref
+      target="RFC9545"/>.</t>
+
+      <t>An SRv6 path could be identified by the content of a segment list.
+      However, the segment list is not be a good key identifier, since the
+      length of a segment list is flexible according to the number of required
+      SIDs. Also, the length of a segment list may be too long to be a key
+      when it contains many SIDs. For instance, if packet A uses an SRH with 3
+      SIDs while Packet B uses an SRH with 10 SIDs, the key to identify these
+      two paths will be a 384-bits value and a 1280-bits value, respectively.
+      Further, an SRv6 path cannot be identified by the information carried by
+      the SRH in reduced mode <xref target="RFC8754"/> as the first SID is not
+      present.</t>
+
+      <t>Furthermore, different SRv6 policies may use the same segment list
+      for different candidate paths, so the traffic of different SRv6 policies
+      are merged, resulting in the inability to measure the performance of the
+      specific path. However, each SRv6 policies may need to measure the
+      segment list in its own candidat path, and this is independent with
+      other SRv6 policies. Without a Path ID to specify the path will cause
+      the statistic of the traffic from multiple paths using the same segment
+      list under different SRv6 policies merge into an aggregated result on
+      the egress endpoint node.</t>
+
+      <t> </t>
+
+      <t>To solve the above issues, this document defines a new SRv6 segment
+      called the "SRv6 Path Segment", which in total is an 128-bits value, to
+      identify an SRv6 path.</t>
+
+      <t>When the SRv6 Path Segment is used in reduced mode SRH <xref
+      target="RFC8754"/>, the entire path information is indicated by the Path
+      Segment, and the performance will be better than using the entire
+      segment list as the path identifier, while the overhead is equivalent to
+      the SRH in normal mode. Furthermore, with SRv6 Path Segment, each SRv6
+      candidate path can be identified and measured, even when they use the
+      same segment list.</t>
+
+      <t/>
+
+      <section title="Requirements Language">
+        <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+        "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+        "OPTIONAL" in this document are to be interpreted as described in BCP
+        14 <xref target="RFC2119"/> <xref target="RFC8174"/> when, and only
+        when, they appear in all capitals, as shown here.</t>
+      </section>
+
+      <section title="Terminology">
+        <t>PM: Performance Measurement.</t>
+
+        <t>SID: Segment ID.</t>
+
+        <t>SR: Segment Routing.</t>
+
+        <t>SR-MPLS: Segment Routing with MPLS data plane.</t>
+
+        <t>SRH: Segment Routing Header.</t>
+
+        <t>SR path: A path described by a segment list <xref
+        target="RFC9545"/>. </t>
+
+        <t>SRv6 path: A path described by an SRv6 segment list. </t>
+
+        <t>PSID: Path Segment Identifier.</t>
+
+        <t>PSP: Penultimate Segment Popping.</t>
+
+        <t>Further, this document makes use of the terms defined in <xref
+        target="RFC8402"/> and <xref target="RFC8986"/>.</t>
+      </section>
+    </section>
+
+    <section title="Use Cases for SRv6 Path Segment">
+      <t>Similar to SR-MPLS Path Segment <xref target="RFC9545"/>, SRv6 Path
+      Segment may also be used to identify an SRv6 Path in some use cases:</t>
+
+      <t><list style="symbols">
+          <t>Performance Measurement: For Passive measurement <xref
+          target="RFC7799"/>, path identification at the measuring points is
+          the pre-requisite <xref target="RFC9545"/>. SRv6 Path segment can be
+          used by the measuring points (e.g., the ingress/egress nodes of an
+          SRv6 path) or a centralized controller to correlate the packets
+          counts/timestamps, then packet loss/delay can be calculated.</t>
+
+          <t>Bi-directional SRv6 Path Association: In some scenarios, such as
+          mobile backhaul transport networks, there are requirements to
+          support bidirectional paths. Like SR-MPLS <xref target="RFC9545"/>,
+          to support bidirectional SRv6 paths, a straightforward way is to
+          bind two unidirectional SRv6 paths to a single bidirectional path.
+          SRv6 Path segments can be used to correlate the two unidirectional
+          SRv6 paths at both ends of the path. <xref
+          target="I-D.ietf-pce-sr-bidir-path"/> defines how to use PCEP and
+          Path Segment to initiate a bidirectional SR path.</t>
+
+          <t>End-to-end Path Protection: For end-to-end 1+1 path protection
+          (i.e., Live-Live case), the egress node of an SRv6 path needs to
+          know the set of paths that constitute the primary and the
+          secondary(s), to select the primary packet for onward transmission,
+          and to discard the packets from the secondary(s), so each SRv6 path
+          needs a unique path identifier at the egress node, which can be an
+          SRv6 Path Segment.</t>
+        </list></t>
+
+      <t/>
+    </section>
+
+    <section title="SRv6 Path Segment">
+      <t>As defined in <xref target="RFC8986"/>, an SRv6 segment is a 128-bit
+      value.</t>
+
+      <t>To identify an SRv6 path, this document defines a new segment called
+      SRv6 Path Segment. An SRv6 Path Segment MUST NOT used for routing so it
+      MUST NOT be copied to the IPv6 destination address. <xref
+      target="RFC8754"/> states that the SR segment endpoint node creates
+      Forwarding Information Base (FIB) entries for its local SIDs (without
+      constraining the details of implementation). In order to provide a new
+      independent 128-bit ID space for Path Segment, the Path Segment is
+      required to be stored seperate from the other SIDs (for example in a
+      different table from the FIB).</t>
+
+      <t>Depending on the use case, an SRv6 Path Segment identifies:</t>
+
+      <t><list style="symbols">
+          <t>an SRv6 path: A PSID is used for identify a segment list. On the
+          egress node, the statstics of this path will be identified by its
+          PSID.</t>
+
+          <t>a set of SRv6 paths: A PSID can be used to identify a bundle of
+          SRv6 paths as an aggregated path in measurement when multiple
+          segment lists use the same PSID. On the egress node, the statstics
+          of these paths will be merged and identified by this PSID.</t>
+
+          <t>a Candidate-path in a SRv6 Policy <xref target="RFC9256"/>: All
+          the segment list within this Candidate-path use the same PSID. On
+          the egress node, the statstics of this Candidate Path will be
+          identified by this PSID.</t>
+
+          <t>an SRv6 Policy: All the segment lists within all the Candidate
+          Paths in the SRv6 policy use the same PSID. It this case, the
+          statistic of traffic under this SRv6 policy will be merged by using
+          the same PSID on the egress node.</t>
+        </list>In other words, a SRv6 PSID can be used for a segment list, or
+      multiple segment lists, or all the segment lists in a Candidate path, or
+      part of or all the Candidate path in an SRv6 policy, depending on the
+      need of use cases.</t>
+
+      <t>Moreover, a segment list may be allocated more than one PSID if
+      needed. For example, the same segment list in different Candidate Path
+      or SR policy can use different PSID. In this way, the traffic in
+      different Candidate Path or SR policy can be differentiated even when
+      they are using the same segment list.</t>
+
+      <t/>
+
+      <section title="Format of an SRv6 Path Segment">
+        <t>This document defines two formats of the SRv6 Path Segment. A
+        future document MAY add further new formats for the SRv6 Path Segment,
+        provided the SRv6 PSID value remains unique irrespective of the
+        format.</t>
+
+        <t/>
+
+        <section title="SRv6 Path Segment: Locator and Local ID">
+          <t>As per <xref target="RFC8986"/>, an SRv6 SID consists of
+          LOC:FUNCT:ARG, where a locator (LOC) is encoded in the L most
+          significant bits of the SID, followed by F bits of function (FUNCT)
+          and A bits of arguments (ARG). L, the locator length, is flexible,
+          and an operator is free to use the locator length of their choice. F
+          and A may be any value as long as L+F+A &lt;= 128. When L+F+A is
+          less than 128, then the remaining bits of the SID MUST be zero.</t>
+
+          <t>SRv6 Path Segment can follow the format, where the LOC part
+          identifies the egress node that allocates the Path Segment, and the
+          FUNCT part is a unique local ID to identify an SRv6 Path and its
+          endpoint behavior, which is END.PSID (End Function with Path Segment
+          Identifier). The code point of END.PSID is 100. The Argument part is
+          set as 0 by default. Future use cases may define the detailed usage
+          of Arguments part. </t>
+
+          <t><figure>
+              <artwork><![CDATA[
+ +--------------------------------------------------------------+
+ |  Locator            |     Function ID  |Arg                  | 
+ +--------------------------------------------------------------+
+ |<-------------------------128 bits--------------------------->|
+
+        Figure 1. PSID Format following LOC:FUNCT:ARG
+
+]]></artwork>
+            </figure></t>
+        </section>
+
+        <section anchor="global" title="SRv6 Path Segment: Global ID">
+          <t>An SRv6 Path Segment ID can be a Global ID, and its format
+          depends on the use case and out of the scope of this document.</t>
+
+          <t><figure>
+              <artwork><![CDATA[             
+ +--------------------------------------------------------------+
+ |                         Global PSID                          |
+ +--------------------------------------------------------------+
+ |<-------------------------128 bits--------------------------->|
+          
+             Figure 2. 128-bit Global PSID
+]]></artwork>
+            </figure></t>
+        </section>
+      </section>
+    </section>
+
+    <section title="Encoding of an SRv6 Path Segment">
+      <t>This section describes the SRv6 Path Segment encoding in SRH.</t>
+
+      <t>The SRv6 Path Segment MUST appear only once in a segment list, and it
+      MUST appear as the last entry in the segment list.</t>
+
+      <section title="SRH.P-flag">
+        <t>To indicate the existence of a Path Segment in the SRH, this
+        document defines a P-flag in the SRH flag field, and it is to be
+        allocated, see IANA allocation section. The encapsulation of SRv6 Path
+        Segment is shown below.</t>
+
+        <t><figure>
+            <artwork><![CDATA[
+     0                   1                   2                   3
+     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    | Next Header   |  Hdr Ext Len  | Routing Type  | Segments Left |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |  Last Entry   |     Flags     |              Tag              |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |                                                               |
+    |            Segment List[0] (128 bits IPv6 address)            |
+    |                                                               |
+    |                                                               |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |                                                               |
+    |                                                               |
+                                  ...
+    |                                                               |
+    |                                                               |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |                                                               |
+    |          Segment List[n-1] (128 bits IPv6 address)            |
+    |                                                               |
+    |                                                               |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |                                                               |
+    |    SRv6 Path Segment (Segment List[n],128 bits IPv6 value)    |
+    |                                                               |
+    |                                                               |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    //                                                             //
+    //         Optional Type Length Value objects (variable)       //
+    //                                                             //
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ 
+
+                Figure 3. SRv6 Path Segment in SID List
+]]></artwork>
+          </figure><list style="symbols">
+            <t>P-flag(TBA1): set when SRv6 Path Segment is inserted. A node
+            that does not understand the P-flag will ignore it as described in
+            <xref target="RFC8754"/>. A node that understands the P-flag but
+            does not support SRv6 Path Segment processing MUST ignore the
+            P-flag. If the P-flag is unset or the P-flag is ignored when
+            processing, the SRv6 Path Segment processing is skipped or
+            ignored.</t>
+          </list></t>
+
+        <t>SRH.P-flag processing can be enabled or disabled by configuration
+        on devices, it can be done by CLI, NETCONF YANG or other ways, and
+        this is out of the scope of this document.</t>
+
+        <t>The pseudo code of SRH.P-flag processing is described as below.</t>
+
+        <t><figure>
+            <artwork><![CDATA[
+    S01.  if SRH.P-flag processing is enabled:
+    S02.     if SRH.P-flag is set:
+    S03.        SRv6 Path Segment processing       ;;ref1   
+
+]]></artwork>
+          </figure></t>
+
+        <t>Ref1: The SRv6 Path Segment processing is accosiated with the
+        specific application, such as SRv6 Path Segment based Performance
+        measurement, so this is out of the scope of this document.</t>
+
+        <t>In order to support the intermediate nodes to process the PSID, the
+        PSID value MUST be unique globally within the domain. In some use
+        cases, only the egress need to process the SRv6 Path Segment,
+        therefore, the P-flag processing can be done at the egress node only
+        while the intermediate nodes do not need to process it. In this case,
+        the PSID value can be unique only locally on the egress node. However,
+        please note that, in this case, if the PSID is processed on an
+        intermediate node, errors may occur due to the value conflict of
+        PSIDs. This feature can be enabled by configuration like CLI , NETCONF
+        YANG or other ways. In this case, the pseudo code is described as
+        below.</t>
+
+        <t><figure>
+            <artwork><![CDATA[
+    S01.  if SRH.P-flag processing is enabled:
+    S02.    if intermediate node processing is disabled: 
+    S03.        if SRH.P-flag is set and SRH.SL == 0:
+    S03.            SRv6 Path Segment processing      
+    S04     else:
+    S05.        if SRH.P-flag is set:
+    S06.            SRv6 Path Segment processing
+
+]]></artwork>
+          </figure></t>
+
+        <t>When the SRH.P-flag is set, the Path Segment processing is enabled.
+        In the cases that the intermediate processing of Path Segment is
+        disabled, a node will process the Path Segment only when it is the
+        last segment endpoint node indicating by SL == 0. In this case, when
+        the nodes are an intermediate node, it will ignore the processing of
+        Path Segment. When the intermediate processing is enabled, all the
+        segment endpoint nodes along the path are able to process the Path
+        Segment if a Path Segment is encoded in the SRH. There are some use
+        cases that metadata of the packets will be collected and processed on
+        the intermediate nodes, especially for the stateful use cases. The
+        details of these use cases are out of the scope of this document, and
+        will be described in other documents in the future. </t>
+
+        <t/>
+      </section>
+    </section>
+
+    <section title="SRv6 Path Segment Allocation">
+      <t>A Path Segment is a segment on the egress node, and it can be
+      allocated through several ways, such as CLI configuration on the engress
+      node, or allocated from the central controller by using BGP <xref
+      target="I-D.ietf-idr-sr-policy-path-segment"/>, PCEP <xref
+      target="I-D.ietf-pce-sr-path-segment"/> or other ways. The mechanisms
+      through which a Path Segment is allocated are out of scope of this
+      document.</t>
+
+      <t>When a PSID is allocated on the egress, it MUST be distributed to the
+      ingress node of the path that identified by the path segment. In this
+      case, only the egress will process the PSID, and other nodes specified
+      by SIDs in the segment list do not know how to process the PSID.</t>
+
+      <t>Depending on the use case, a PSID may be distributed to the SRv6
+      nodes along the SRv6 path. In this case, the SRv6 nodes that learned the
+      PSID may process the PSID depending on the use case. This is out of the
+      scope of this document, and may be studied in the future if needed.</t>
+    </section>
+
+    <section title="Processing of SRv6 Path Segment">
+      <t>When the SRv6 Path Segment is used, the following rules apply:</t>
+
+      <t><list style="symbols">
+          <t>The SRv6 Path Segment MUST appear only once in a segment list,
+          and it MUST appear as the last entry. Placing an SRv6 Path Segment
+          at any other location in the SID list will result in unpredictable
+          forwarding behavior. Only the one that appears as the last entry in
+          the SID list will be processed.</t>
+
+          <t>When an SRv6 Path Segment is inserted, the SL MUST be initiated
+          to be less than the value of Last Entry, and will not point to SRv6
+          Path Segment. For instance, when the Last entry is 4, the SID
+          List[4] is the SRv6 Path Segment, so the SL MUST be set to 3 or
+          other numbers less than Last entry.</t>
+
+          <t>The SRv6 Path Segment MUST NOT be copied to the IPv6 destination
+          address.</t>
+
+          <t>Penultimate Segment Popping (PSP, as defined in <xref
+          target="RFC8986"/>) MUST be disabled for the penultimate Segment in
+          the SRH. In other words, an SID with PSP flavor MUST NOT be used in
+          the penultimate segment in the SRH to aovid removing the SRH before
+          reaching the egress node.</t>
+
+          <t>The ingress needs to set the P-flag when an SRv6 Path Segment is
+          inserted in the SID List. Nodes that support SRv6 Path Segment
+          processing will inspect the last entry to process SRv6 Path Segment
+          when the P-flag is set. When the P-flag is unset, the nodes will not
+          inspect the last entry.</t>
+
+          <t>The specific SRv6 Path Segment processing depends on use cases,
+          and it is out of scope of this document.</t>
+        </list></t>
+    </section>
+
+    <section anchor="IANA" title="IANA Considerations">
+      <t>This I-D requests the IANA to allocate, within the "SRv6 Endpoint
+      Behaviors" sub-registry belonging to the top-level "Segment-routing with
+      IPv6 data plane (SRv6) Parameters" registry, the following
+      allocations:</t>
+
+      <figure>
+        <artwork><![CDATA[   Value      Description                               Reference
+   --------------------------------------------------------------
+   100       End.PSID - SRv6 Path Segment                [This.ID]
+
+]]></artwork>
+      </figure>
+
+      <t/>
+
+      <t>This document also requests IANA to allocate bit position TBA1 within
+      the "Segment Routing Header Flags" registry defined in [RFC8402].</t>
+
+      <t><figure>
+          <artwork><![CDATA[   Value      Description                               Reference
+   --------------------------------------------------------------
+   TBA1       P-flag to indicate using Path Segment      [This.ID]
+
+]]></artwork>
+        </figure></t>
+    </section>
+
+    <section anchor="Security" title="Security Considerations">
+      <t>This document does not introduce additional security requirements and
+      mechanisms other than the ones described in <xref
+      target="RFC8402"/>.</t>
+
+      <t>Similar to SR-MPLS Path Segment <xref target="RFC9545"/>, the data
+      plane processing of a PSID is a local implementation of an SRv6 segment
+      endpoint node, which follows the same logic of an existing SRv6 data
+      plane. </t>
+
+      <t/>
+
+      <t>In this document, only the egress node and the ingress node of the
+      associated path will learn the information of a PSID. The intermediate
+      nodes of this path will not learn it. However, in some cases, the whole
+      Segment list with PSID may be used in a sub-set of a longer path. In
+      this case, the whole segment list may be shared to the ingress node of
+      the longer path. Similar to other SIDs defined in <xref
+      target="RFC8402"/>, the PSID must be distributed in a trusted domain
+      under the considerations defined in Section 8.2 of <xref
+      target="RFC8402"/>. </t>
+
+      <t>A PSID is used within an SRv6 trusted domain <xref target="RFC8402"/>
+      and must not leak outside the domain; therefore, no new security threats
+      are introduced compared to current SRv6. </t>
+
+      <t>As per <xref target="RFC8402"/>, SR domain boundary routers MUST
+      filter any external traffic destined to an SID associated with a segment
+      within the trusted domain; this applies to a PSID as well. Other
+      security considerations of SRv6 described in Section 8.2 of [RFC8402]
+      apply to this document. The distribution of a PSID from an egress node
+      to an ingress node is performed within an SR-trusted domain, and it is
+      out of the scope of this document. The details of the mechanism and
+      related security considerations will be described in other documents.
+      </t>
+    </section>
+
+    <section title="Contributors">
+      <t/>
+
+      <t><figure>
+          <artwork><![CDATA[
+   Zhenbin Li
+   Huawei Technologies
+   Huawei Campus, No. 156 Beiqing Rd.
+   Beijing  100095
+   China
+
+   Email: lizhenbin@huawei.com
+
+
+   Jie Dong
+   Huawei Technologies
+   Huawei Campus, No. 156 Beiqing Rd.
+   Beijing  100095
+   China
+
+   Email: jie.dong@huawei.com
+
+]]></artwork>
+        </figure></t>
+    </section>
+
+    <section anchor="Acknowledgements" title="Acknowledgements">
+      <t>The authors would like to thank Adrian Farrel, Stefano Previdi, Zafar
+      Ali, Lijie Deng, Zehua Hu, Joel Halpern, Yao Liu, Greg Mirsky, Quan
+      Xiong, Weier Li and Xinyue Zhang for their valuable comments and
+      suggestions.</t>
+    </section>
+  </middle>
+
+  <back>
+    <references title="Normative References">
+      <?rfc include="reference.RFC.2119"?>
+
+      <?rfc include="reference.RFC.8174"?>
+
+      <?rfc include="reference.RFC.8402"?>
+
+      <?rfc include='reference.RFC.8754'?>
+
+      <?rfc include='reference.RFC.8986'
+?>
+    </references>
+
+    <references title="Informative References">
+      <?rfc include='reference.RFC.9256'?>
+
+      <?rfc include='reference.RFC.9545'?>
+
+      <?rfc include='reference.RFC.8660'?>
+
+      <?rfc include='reference.I-D.ietf-idr-sr-policy-path-segment'?>
+
+      <?rfc include='reference.I-D.ietf-pce-sr-path-segment'
+?>
+
+      <?rfc include='reference.I-D.ietf-pce-sr-bidir-path'
+?>
+
+      <?rfc include='reference.I-D.ietf-spring-stamp-srpm'
+?>
+
+      <?rfc include='reference.RFC.7799'?>
+    </references>
+  </back>
+</rfc>
